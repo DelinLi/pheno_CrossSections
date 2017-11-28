@@ -7,9 +7,6 @@ To be decide
 2. QR code decode using [qrtools](document/qr_code.md)
 
 
-###### generate codes // useless for this project
-install pyqrcode
-pip install pyqrcode
 
 ## Software to use for detect CrossSections
 1. internet source
