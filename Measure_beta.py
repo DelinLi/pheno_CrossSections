@@ -2,7 +2,9 @@
 #Write by Delin Li, Schnable Lab @ CAU
 #delin.bio@gmail.com
 #Start 8:00 PM Jan 05, 2018
-#updated 11:54 PM Jan 06, 2018
+#updated 11:00 PM Jan 09, 2018
+import matplotlib
+matplotlib.use('Agg')
 from scipy.spatial import distance as dist
 from imutils import perspective
 from imutils import contours
@@ -12,6 +14,8 @@ import imutils
 import numpy as np
 import argparse
 import cv2
+import re
+
 
 #function
 def midpoint(ptA, ptB):
@@ -58,8 +62,8 @@ def Str(c,orig):
     cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
     cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
     # draw lines between the midpoints
-    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),(255, 0, 255), 2)
-    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),(255, 0, 255), 2)
+    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),(255, 0, 255), 8)
+    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),(255, 0, 255), 8)
     # compute the Euclidean distance between the midpoints
     dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
     dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
@@ -71,12 +75,12 @@ def Str(c,orig):
         dimA = dB * pixelsPerMetric
         dimB = dA * pixelsPerMetric
     # draw the object sizes on the image
-    cv2.putText(orig, "{:.1f}in".format(dimA),
-	(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-    0.65, (255, 255, 255), 10)
-    cv2.putText(orig, "{:.1f}in".format(dimB),
-        (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-        0.65, (255, 255, 255), 10)
+    #cv2.putText(orig, "{:.1f}in".format(dimA),
+	#(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
+    #1.65, (255, 0, 0), 2)
+    #cv2.putText(orig, "{:.1f}in".format(dimB),
+    #    (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+    #    1.65, (255, 0, 0), 2)
     return(orig,dimA,dimB)
 
 '''read in parameter'''
@@ -110,92 +114,62 @@ for i in range(50,110):
         img[i,j,]=(55,36,34)#(0,0,0)
 
 
-HSV=cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
 '''The Seed'''
-R=img[:,:,2]
-
-gaussian = cv2.GaussianBlur(R, (17, 17), 1)
+B,G,R= cv2.split(img)
+gaussian = cv2.GaussianBlur(R.copy(), (17, 17), 1)
 th, binary = cv2.threshold(gaussian,  80, 255,cv2.THRESH_BINARY);
 
 Seed = cv2.Canny(binary, 100, 200)
-Seed = cv2.dilate(Seed, None, iterations=3)
-Seed = cv2.erode(Seed, None, iterations=1)
+Seed = cv2.dilate(Seed, None, iterations=8)
+Seed = cv2.erode(Seed, None, iterations=5)
 
 contours, hierarchy = cv2.findContours(Seed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
 seed_c=contours[BigArea(contours)]
 Area_seed=cv2.contourArea(seed_c) * pixelsPerMetric
 
-Orig_S,l_S,s_S=Str(seed_c,orig)
+embryo=np.full(img.shape,255,dtype=np.uint8)
+cv2.drawContours(embryo, [seed_c], 0, (0, 0, 0), -1)
+#create a copy for ouput to show different area and size
+Draw_out=embryo.copy()
 
-###plan to output: Area, dimA, dimB
-# show the output image
-#plt.imshow(orig)
-#plt.show()
+Draw_out,l_S,s_S=Str(seed_c,Draw_out)
+
+#Mask the background as 0
 Mask=np.zeros(img.shape,dtype=np.uint8)
 cv2.drawContours(Mask, [seed_c], 0, (255, 255, 255), -1)
 Masked=np.minimum(Mask,img)
 
 '''The germ'''
-HSV=cv2.cvtColor(Masked, cv2.COLOR_BGR2HSV)
+HSV=cv2.cvtColor(Masked.copy(), cv2.COLOR_BGR2HSV)
 gaussian = cv2.GaussianBlur(HSV[:,:,0], (17, 17), 1)
 
-th, binary = cv2.threshold(gaussian, 150, 255,cv2.THRESH_BINARY);
+th, binary = cv2.threshold(gaussian.copy(), 150, 255,cv2.THRESH_BINARY);
 Germ = cv2.dilate(binary, None, iterations=3)
 Germ = cv2.Canny(Germ, 100, 200)
 Germ = cv2.dilate(Germ, None, iterations=3)
 contours, hierarchy = cv2.findContours(Germ,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 germ_c=contours[BigArea(contours)]
 
+#mask the embryo as red
+cv2.drawContours(Draw_out, [germ_c], 0, (0, 0, 255), -1)
 
-Orig_G,l_G,s_G=Str(germ_c,orig)
+Draw_out,l_G,s_G=Str(germ_c,Draw_out)
 Area_germ= cv2.contourArea(germ_c) * pixelsPerMetric
 if Area_germ > Area_seed*0.75:
     print("Possible un-expected error happens that germ accounts for more than 75% of seed")
 
 out=[args["image"], row, col, Area_seed,l_S,s_S, Area_germ,l_G,s_G]
 with open(args["output"], "a") as fh:
-	for item in out:
-		fh.write("%s\t" % item)
-	fh.write("\n")
+    for item in out:
+        fh.write("%s\t" % item)
+    fh.write("\n")
 fh.close
 
-'''look into the embryo (yellow & white) channel Blue
-embryo=np.full(img.shape,255,dtype=np.uint8)
-cv2.drawContours(embryo, [seed_c], 0, (0, 0, 0), -1)
-cv2.drawContours(embryo, [germ_c], 0, (255, 255, 255), -1)
-embryo=np.maximum(embryo,img)
-
-hist = cv2.calcHist([embryo],[0],None,[256],[0,256])
-
-
-hist = cv2.calcHist([embryo],[2],None,[256],[0,256])
-plt.plot(hist[1:250])
-plt.show()
-
-
-Gray=cv2.cvtColor(embryo, cv2.COLOR_BGR2GRAY)
-
-hist = cv2.calcHist(Gray,[0],None,[256],[0,256])
-plt.plot(hist[1:250])
-plt.show()
-
-mask = np.zeros(img.shape[:2], np.uint8)
-mask[100:300, 100:400] = 255
-thresh=100 #set this
-hist = cv2.calcHist([img],[0],None,[256],[0,256])
-
-hist[:thresh].sum()
-hist[:thresh].max() # max value
-hist[:thresh].mean() # average
-hist[thresh:].sum()
-hist[thresh:].max()
-hist[thresh:].mean()
-
-from pathlib import Path
-
-my_file = Path("/path/to/file")
-if my_file.is_file():
-'''
+'''output the final seed, embryo and their size'''
+'''Compare before and after'''
+outfig= "%s_%s" % ("Masked",re.sub(r'.*\/',r'',args["image"]))
+plt.subplot(2,1,1),plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+plt.subplot(2,1,2),plt.imshow(cv2.cvtColor(Draw_out, cv2.COLOR_BGR2RGB))
+plt.savefig(outfig)
 
