@@ -2,7 +2,7 @@
 #Write by Delin Li, Schnable Lab @ CAU
 #delin.bio@gmail.com
 #Start 8:00 PM Jan 05, 2018
-#updated 11:00 PM Jan 09, 2018
+#updated 9:30 PM Jan 12, 2018
 import matplotlib
 matplotlib.use('Agg')
 from scipy.spatial import distance as dist
@@ -83,6 +83,8 @@ def Str(c,orig):
     #    1.65, (255, 0, 0), 2)
     return(orig,dimA,dimB)
 
+
+
 '''read in parameter'''
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
@@ -94,9 +96,11 @@ args = vars(ap.parse_args())
 
 '''read in '''
 img=cv2.imread(args["image"])
+#img=cv2.imread("../../seed/B73/1/B73_1_1.tif")
+
 row, col =img.shape[0:2]
 
-orig = img.copy()
+original = img.copy()
 '''The marker '''
 #cropped = img[54:105,44:540,]
 #cv2.imwrite("Marker_200um.png",cropped)
@@ -110,45 +114,64 @@ orig = img.copy()
 pixelsPerMetric= 0.4032258
 
 for i in range(50,110):
-    for j in range(40,550):
+    for j in range(40,580):
         img[i,j,]=(55,36,34)#(0,0,0)
 
 
 '''The Seed'''
 B,G,R= cv2.split(img)
 gaussian = cv2.GaussianBlur(R.copy(), (17, 17), 1)
-th, binary = cv2.threshold(gaussian,  80, 255,cv2.THRESH_BINARY);
+th, binary = cv2.threshold(gaussian,  60, 255,cv2.THRESH_BINARY);
 
-Seed = cv2.Canny(binary, 100, 200)
-Seed = cv2.dilate(Seed, None, iterations=8)
-Seed = cv2.erode(Seed, None, iterations=5)
-
-contours, hierarchy = cv2.findContours(Seed,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
+dilated = cv2.dilate(binary, kernel)
+contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 seed_c=contours[BigArea(contours)]
+
+#plt.imshow(binary)
+'''used in early version -> backup
+Seed = cv2.Canny(binary, 100, 200)
+Seed = cv2.dilate(Seed, None, iterations=1) #8
+Seed = cv2.erode(Seed, None, iterations=1) #5
+contours, hierarchy = cv2.findContours(Seed.copy(),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+seed_c=contours[BigArea(contours)]
+'''
 Area_seed=cv2.contourArea(seed_c) * pixelsPerMetric
 
 embryo=np.full(img.shape,255,dtype=np.uint8)
 cv2.drawContours(embryo, [seed_c], 0, (0, 0, 0), -1)
+
 #create a copy for ouput to show different area and size
 Draw_out=embryo.copy()
-
 Draw_out,l_S,s_S=Str(seed_c,Draw_out)
 
+
+
+''' To Do '''
 #Mask the background as 0
+'''
 Mask=np.zeros(img.shape,dtype=np.uint8)
 cv2.drawContours(Mask, [seed_c], 0, (255, 255, 255), -1)
-Masked=np.minimum(Mask,img)
+Masked=np.minimum(Mask,original)
+'''
+Mask=np.full(img.shape,255,dtype=np.uint8)
+cv2.drawContours(Mask, [seed_c], 0, (0, 0, 0), -1)
+Masked=np.maximum(Mask,original)
+
 
 '''The germ'''
-HSV=cv2.cvtColor(Masked.copy(), cv2.COLOR_BGR2HSV)
-gaussian = cv2.GaussianBlur(HSV[:,:,0], (17, 17), 1)
 
-th, binary = cv2.threshold(gaussian.copy(), 150, 255,cv2.THRESH_BINARY);
-Germ = cv2.dilate(binary, None, iterations=3)
-Germ = cv2.Canny(Germ, 100, 200)
-Germ = cv2.dilate(Germ, None, iterations=3)
-contours, hierarchy = cv2.findContours(Germ,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+HSV=cv2.cvtColor(Masked.copy(), cv2.COLOR_BGR2HSV)
+
+gaussian=HSV[:,:,0].copy()
+
+th, binary = cv2.threshold(gaussian.copy(), 150, 255,cv2.THRESH_BINARY)
+
+
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
+Germ = cv2.dilate(binary, kernel)
+
+contours, _ = cv2.findContours(Germ.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 germ_c=contours[BigArea(contours)]
 
 #mask the embryo as red
@@ -157,9 +180,13 @@ cv2.drawContours(Draw_out, [germ_c], 0, (0, 0, 255), -1)
 Draw_out,l_G,s_G=Str(germ_c,Draw_out)
 Area_germ= cv2.contourArea(germ_c) * pixelsPerMetric
 if Area_germ > Area_seed*0.75:
-    print("Possible un-expected error happens that germ accounts for more than 75% of seed")
+    print("Possible un-expected error happens that germ accounts for more than 75% of seed:",args["image"])
+
+if Area_germ < Area_seed*0.25:
+    print("Possible un-expected error happens that germ accounts for less than 25% of seed:",args["image"])
 
 out=[args["image"], row, col, Area_seed,l_S,s_S, Area_germ,l_G,s_G]
+
 with open(args["output"], "a") as fh:
     for item in out:
         fh.write("%s\t" % item)
