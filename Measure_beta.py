@@ -2,22 +2,22 @@
 #Write by Delin Li, Schnable Lab @ CAU
 #delin.bio@gmail.com
 #Start 8:00 PM Jan 05, 2018
-#updated 9:30 PM Jan 12, 2018
+#updated 8:00 PM Jan 14, 2018
 import matplotlib
 matplotlib.use('Agg')
 from scipy.spatial import distance as dist
 from imutils import perspective
 from imutils import contours
 from matplotlib import pyplot as plt
-from pathlib import Path
+#from pathlib import Path
 import imutils
 import numpy as np
 import argparse
 import cv2
 import re
+import os
 
-
-#function
+'''functions'''
 def midpoint(ptA, ptB):
 	return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
 
@@ -30,7 +30,6 @@ def BigArea(contours):
             j=i
             Area=cv2.contourArea(contours[i])
     return(j)
-
 
 def Str(c,orig):
     # compute the rotated bounding box of the contour
@@ -120,12 +119,13 @@ for i in range(50,110):
 
 '''The Seed'''
 B,G,R= cv2.split(img)
-gaussian = cv2.GaussianBlur(R.copy(), (17, 17), 1)
-th, binary = cv2.threshold(gaussian,  60, 255,cv2.THRESH_BINARY);
+gaussian = cv2.GaussianBlur(R.copy(), (7, 7), 1)
+th, binary = cv2.threshold(gaussian,  70, 255,cv2.THRESH_BINARY);
 
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
 dilated = cv2.dilate(binary, kernel)
-contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 seed_c=contours[BigArea(contours)]
 
 #plt.imshow(binary)
@@ -187,11 +187,19 @@ if Area_germ < Area_seed*0.25:
 
 out=[args["image"], row, col, Area_seed,l_S,s_S, Area_germ,l_G,s_G]
 
-with open(args["output"], "a") as fh:
-    for item in out:
-        fh.write("%s\t" % item)
-    fh.write("\n")
-fh.close
+if os.path.exists(args["output"]) and os.path.getsize(args["output"]) > 0:
+	with open(args["output"], "a") as fh:
+		for item in out:
+			fh.write("%s\t" % item)
+		fh.write("\n")
+	fh.close
+else:
+	with open(args["output"], "a") as fh:
+		fh.write("file\trows\tcols\tSeedArea\tSeedLength\tSeedWidth\tEmbryoArea\tEmbryoLength\tEmbryoWidth\n")
+		for item in out:
+			fh.write("%s\t" % item)
+		fh.write("\n")
+	fh.close
 
 '''output the final seed, embryo and their size'''
 '''Compare before and after'''
