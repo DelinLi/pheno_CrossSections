@@ -2,7 +2,7 @@
 #Write by Delin Li, Schnable Lab @ CAU
 #delin.bio@gmail.com
 #Start 8:00 PM Jan 05, 2018
-#updated 8:00 PM Jan 14, 2018
+#updated 9:30 PM Jan 12, 2018
 import matplotlib
 matplotlib.use('Agg')
 from scipy.spatial import distance as dist
@@ -125,7 +125,7 @@ th, binary = cv2.threshold(gaussian,  70, 255,cv2.THRESH_BINARY);
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
 dilated = cv2.dilate(binary, kernel)
 
-contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 seed_c=contours[BigArea(contours)]
 
 #plt.imshow(binary)
@@ -171,7 +171,7 @@ th, binary = cv2.threshold(gaussian.copy(), 150, 255,cv2.THRESH_BINARY)
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
 Germ = cv2.dilate(binary, kernel)
 
-contours, _ = cv2.findContours(Germ.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+contours, _ = cv2.findContours(Germ.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 germ_c=contours[BigArea(contours)]
 
 #mask the embryo as red
