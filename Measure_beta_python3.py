@@ -1,4 +1,4 @@
-#using python2.7
+#using python3
 #Write by Delin Li, Schnable Lab @ CAU
 #delin.bio@gmail.com
 #Start 8:00 PM Jan 05, 2018
@@ -32,55 +32,55 @@ def BigArea(contours):
     return(j)
 
 def Str(c,orig):
-    # compute the rotated bounding box of the contour
-    box = cv2.minAreaRect(c)
-    box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
-    box = np.array(box, dtype="int")
-    # order the points in the contour such that they appear
-    # in top-left, top-right, bottom-right, and bottom-left
-    # order, then draw the outline of the rotated bounding
-    # box
-    box = perspective.order_points(box)
-    cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 2)
-    # loop over the original points and draw them
-    for (x, y) in box:
-        cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255), -1)
-    # unpack the ordered bounding box, then compute the midpoint
-    # between the top-left and top-right coordinates, followed by
-    # the midpoint between bottom-left and bottom-right coordinates
-    (tl, tr, br, bl) = box
-    (tltrX, tltrY) = midpoint(tl, tr)
-    (blbrX, blbrY) = midpoint(bl, br)
-    # compute the midpoint between the top-left and top-right points,
-    # followed by the midpoint between the top-righ and bottom-right
-    (tlblX, tlblY) = midpoint(tl, bl)
-    (trbrX, trbrY) = midpoint(tr, br)
-    # draw the midpoints on the image
-    cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
-    cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
-    # draw lines between the midpoints
-    cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),(255, 0, 255), 8)
-    cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),(255, 0, 255), 8)
-    # compute the Euclidean distance between the midpoints
-    dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
-    dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
-    # compute the size of the object
-    if dA>=dB:
-        dimA = dA * pixelsPerMetric
-        dimB = dB * pixelsPerMetric
-    else:
-        dimA = dB * pixelsPerMetric
-        dimB = dA * pixelsPerMetric
-    # draw the object sizes on the image
-    #cv2.putText(orig, "{:.1f}in".format(dimA),
+	# compute the rotated bounding box of the contour
+	box = cv2.minAreaRect(c)
+	box = cv2.cv.BoxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
+	box = np.array(box, dtype="int")
+	# order the points in the contour such that they appear
+	# in top-left, top-right, bottom-right, and bottom-left
+	# order, then draw the outline of the rotated bounding
+	# box
+	box = perspective.order_points(box)
+	cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 2)
+	# loop over the original points and draw them
+	for (x, y) in box:
+		cv2.circle(orig, (int(x), int(y)), 5, (0, 0, 255), -1)
+	# unpack the ordered bounding box, then compute the midpoint
+	# between the top-left and top-right coordinates, followed by
+	# the midpoint between bottom-left and bottom-right coordinates
+	(tl, tr, br, bl) = box
+	(tltrX, tltrY) = midpoint(tl, tr)
+	(blbrX, blbrY) = midpoint(bl, br)
+	# compute the midpoint between the top-left and top-right points,
+	# followed by the midpoint between the top-righ and bottom-right
+	(tlblX, tlblY) = midpoint(tl, bl)
+	(trbrX, trbrY) = midpoint(tr, br)
+	# draw the midpoints on the image
+	cv2.circle(orig, (int(tltrX), int(tltrY)), 5, (255, 0, 0), -1)
+	cv2.circle(orig, (int(blbrX), int(blbrY)), 5, (255, 0, 0), -1)
+	cv2.circle(orig, (int(tlblX), int(tlblY)), 5, (255, 0, 0), -1)
+	cv2.circle(orig, (int(trbrX), int(trbrY)), 5, (255, 0, 0), -1)
+	# draw lines between the midpoints
+	cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)),(255, 0, 255), 8)
+	cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)),(255, 0, 255), 8)
+	# compute the Euclidean distance between the midpoints
+	dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY))
+	dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
+	# compute the size of the object
+	if dA>=dB:
+		dimA = dA * pixelsPerMetric
+		dimB = dB * pixelsPerMetric
+	else:
+		dimA = dB * pixelsPerMetric
+		dimB = dA * pixelsPerMetric
+	# draw the object sizes on the image
+	#cv2.putText(orig, "{:.1f}in".format(dimA),
 	#(int(tltrX - 15), int(tltrY - 10)), cv2.FONT_HERSHEY_SIMPLEX,
-    #1.65, (255, 0, 0), 2)
-    #cv2.putText(orig, "{:.1f}in".format(dimB),
-    #    (int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
-    #    1.65, (255, 0, 0), 2)
-    return(orig,dimA,dimB)
+	#1.65, (255, 0, 0), 2)
+	#cv2.putText(orig, "{:.1f}in".format(dimB),
+	#	(int(trbrX + 10), int(trbrY)), cv2.FONT_HERSHEY_SIMPLEX,
+	#	1.65, (255, 0, 0), 2)
+	return(orig,dimA,dimB)
 
 
 
@@ -120,12 +120,13 @@ for i in range(50,110):
 '''The Seed'''
 B,G,R= cv2.split(img)
 gaussian = cv2.GaussianBlur(R.copy(), (7, 7), 1)
-th, binary = cv2.threshold(gaussian,  70, 255,cv2.THRESH_BINARY);
+th, binary = cv2.threshold(gaussian.copy(),  70, 255,cv2.THRESH_BINARY);
 
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
 dilated = cv2.dilate(binary, kernel)
+ForCon=cv2.erode(dilated, None, iterations=1)
 
-contours, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+_,contours, _ = cv2.findContours(ForCon.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 seed_c=contours[BigArea(contours)]
 
 #plt.imshow(binary)
@@ -139,23 +140,14 @@ seed_c=contours[BigArea(contours)]
 Area_seed=cv2.contourArea(seed_c) * pixelsPerMetric
 
 embryo=np.full(img.shape,255,dtype=np.uint8)
-cv2.drawContours(embryo, [seed_c], 0, (0, 0, 0), -1)
+embryo=cv2.drawContours(embryo, [seed_c], 0, (0, 0, 0), -1)
 
 #create a copy for ouput to show different area and size
 Draw_out=embryo.copy()
 Draw_out,l_S,s_S=Str(seed_c,Draw_out)
 
-
-
-''' To Do '''
-#Mask the background as 0
-'''
-Mask=np.zeros(img.shape,dtype=np.uint8)
-cv2.drawContours(Mask, [seed_c], 0, (255, 255, 255), -1)
-Masked=np.minimum(Mask,original)
-'''
 Mask=np.full(img.shape,255,dtype=np.uint8)
-cv2.drawContours(Mask, [seed_c], 0, (0, 0, 0), -1)
+Mask=cv2.drawContours(Mask, [seed_c], 0, (0, 0, 0), -1)
 Masked=np.maximum(Mask,original)
 
 
@@ -165,8 +157,6 @@ Masked=np.maximum(Mask,original)
 B,G,R= cv2.split(Masked)
 
 th,RBin=cv2.threshold(R, 200, 1,cv2.THRESH_BINARY_INV)
-
-
 HSV=cv2.cvtColor(Masked.copy(), cv2.COLOR_BGR2HSV)
 th,S=cv2.threshold(HSV[:,:,1].copy() , 140, 1,cv2.THRESH_BINARY)
 
@@ -174,24 +164,31 @@ gaussian=HSV[:,:,0].copy()
 
 th, binary = cv2.threshold(gaussian.copy(), 150, 255,cv2.THRESH_BINARY)
 
-Combine=binary * RBin *S
+Combine=binary * RBin * S
+
+######
+
+######
 
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(7,7))
 Germ = cv2.dilate(Combine, kernel)
-
-contours, _ = cv2.findContours(Germ.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+#edges = cv2.Canny(Combine.copy(),100,200)
+#edges=cv2.dilate(edges, None, iterations=1)
+#edges=cv2.erode(edges, None)
+'''change'''
+_,contours, _ = cv2.findContours(Germ.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 germ_c=contours[BigArea(contours)]
 
 #mask the embryo as red
-cv2.drawContours(Draw_out, [germ_c], 0, (0, 0, 255), -1)
+Draw_out=cv2.drawContours(Draw_out, [germ_c], 0, (0, 0, 255), -1)
 
 Draw_out,l_G,s_G=Str(germ_c,Draw_out)
 Area_germ= cv2.contourArea(germ_c) * pixelsPerMetric
 if Area_germ > Area_seed*0.75:
     print("Possible un-expected error happens that germ accounts for more than 75% of seed:",args["image"])
 
-if Area_germ < Area_seed*0.25:
-    print("Possible un-expected error happens that germ accounts for less than 25% of seed:",args["image"])
+if Area_germ < Area_seed*0.15:
+    print("Possible un-expected error happens that germ accounts for less than 15% of seed:",args["image"])
 
 out=[args["image"], row, col, Area_seed,l_S,s_S, Area_germ,l_G,s_G]
 
